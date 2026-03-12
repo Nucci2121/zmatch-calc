@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zMatch — Comparativo Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bgs:#F7F9F7;--bgm:#EEF2EE;
+  --bd:#E2E8DF;--bdm:#C5D0C2;
+  --tx:#1A1E18;--txs:#4E5A4B;--txm:#8A968A;
+  --gr:#277A2B;--grl:#EAF4EA;--grm:#9ECBA1;
+  --bl:#1354A0;--blb:#EBF1FB;
+  --go:#9B4F08;--gob:#FDF5EA;
+  --rd:#B41C1C;
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bgs);color:var(--tx);min-height:100vh}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{opacity:.3}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+
+/* ── layout ──────────────────────────────────── */
+.nav{background:var(--bg);border-bottom:1px solid var(--bd);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-z{width:30px;height:30px;background:var(--gr);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;flex-shrink:0}
+.hero{background:var(--bg);border-bottom:1px solid var(--bd);padding:24px 28px 20px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--grl);border:1px solid var(--grm);border-radius:20px;padding:3px 12px;font-size:11px;color:var(--gr);font-weight:700;margin-bottom:10px;letter-spacing:.04em}
+.hero h1{font-size:24px;font-weight:800;letter-spacing:-.4px;line-height:1.25;margin-bottom:6px}
+.hero p{font-size:13px;color:var(--txs);max-width:440px;margin:0 auto;line-height:1.6}
+
+/* two-column */
+.wrap{display:flex;max-width:1380px;margin:0 auto;align-items:flex-start}
+.left{width:360px;flex-shrink:0;border-right:1px solid var(--bd);background:var(--bg);height:calc(100vh - 122px);overflow-y:auto;position:sticky;top:0;padding:16px 14px 80px}
+.right{flex:1;padding:24px 28px 60px;min-width:0}
+
+/* ── primitives ──────────────────────────────── */
+.lbl{font-size:12px;font-weight:600;color:var(--txs);margin-bottom:4px}
+.hint{font-size:11px;color:var(--txm);font-weight:400;float:right}
+.inp{display:flex;align-items:center;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg);overflow:hidden;transition:border-color .15s}
+.inp:focus-within{border-color:var(--gr)}
+.inp.ro{background:var(--bgs);opacity:.75}
+.inp input{flex:1;border:none;outline:none;padding:8px 10px;font-size:13px;color:var(--tx);background:transparent;font-family:'IBM Plex Mono',monospace;min-width:0;width:100%}
+.pfx,.sfx{padding:8px 9px;font-size:12px;color:var(--txm);background:var(--bgs);white-space:nowrap;flex-shrink:0}
+.pfx{border-right:1px solid var(--bd)}
+.sfx{border-left:1px solid var(--bd)}
+.f{margin-bottom:11px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hr{height:1px;background:var(--bd);margin:10px 0}
+
+/* ── chip toggles ────────────────────────────── */
+.toggle-row{display:flex;gap:6px;margin-top:3px}
+.tog{padding:5px 12px;font-size:12px;font-weight:600;border-radius:6px;border:1.5px solid var(--bd);background:var(--bg);color:var(--txs);transition:all .12s}
+.tog.on{border-color:var(--gr);background:var(--grl);color:var(--gr)}
+.tog.on-bl{border-color:var(--bl);background:var(--blb);color:var(--bl)}
+
+/* ── section card ────────────────────────────── */
+.sec{background:var(--bg);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sec.ac-gr{border-color:rgba(39,122,43,.3)}
+.sec.ac-bl{border-color:rgba(19,84,160,.3)}
+.sec-h{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--bgs);border-bottom:1px solid var(--bd)}
+.sec.ac-gr .sec-h{background:rgba(39,122,43,.05);border-bottom-color:rgba(39,122,43,.12)}
+.sec.ac-bl .sec-h{background:rgba(19,84,160,.05);border-bottom-color:rgba(19,84,160,.12)}
+.dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;background:var(--gr)}
+.dot.bl{background:var(--bl)}
+.sec-t{font-size:13px;font-weight:700}
+.sec-s{font-size:11px;color:var(--txm);margin-top:1px}
+.sec-b{padding:14px 14px 12px}
+
+/* ── car card ────────────────────────────────── */
+.car{background:var(--bg);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.car-img{position:relative;background:var(--bg);border-bottom:1px solid var(--bd);padding:16px 14px 12px}
+.car-img img{display:none}
+.car-img-ov{display:none}
+.car-name{position:static}
+.car-br{font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px}
+.car-mo{font-size:15px;font-weight:800;color:var(--tx);line-height:1.3}
+.car-ve{font-size:11px;color:var(--txm);margin-top:3px;line-height:1.5}
+.btn-ch{margin-top:10px;background:var(--bgs);border:1.5px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--gr);display:inline-flex;align-items:center;gap:4px;box-shadow:none}
+.btn-ch:hover{background:var(--grl);border-color:var(--grm)}
+.car-icon-wrap{width:44px;height:44px;background:var(--grl);border:1.5px solid var(--grm);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px}
+.car-pr{display:flex;padding:10px 14px;border-bottom:1px solid var(--bd)}
+.car-pr-item{flex:1}
+.car-pr-div{width:1px;background:var(--bd);margin:0 12px}
+.pr-lb{font-size:11px;color:var(--txm);font-weight:500}
+.pr-v{font-size:17px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.pr-v.gr{font-size:15px;color:var(--gr)}
+.car-plan{padding:12px 14px}
+.plan-lb{font-size:11px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.assin-box{background:var(--grl);border:1px solid var(--grm);border-radius:8px;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.assin-info-lb{font-size:11px;font-weight:600;color:var(--txs)}
+.assin-info-sub{font-size:11px;color:var(--txm);margin-top:2px}
+.assin-val{font-size:20px;font-weight:900;color:var(--gr);font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.assin-val span{font-size:11px;font-weight:600}
+
+/* km/meses chips inside car card */
+.chip-row{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:4px 10px;font-size:12px;font-weight:600;border-radius:6px;border:1.5px solid var(--bd);background:var(--bg);color:var(--txs);transition:all .12s}
+.chip.on{border-color:var(--gr);background:var(--grl);color:var(--gr)}
+
+/* ── inline cost row ─────────────────────────── */
+/* value left, toggle right, full width */
+.cost-item{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cost-item .inp{width:108px;flex-shrink:0}
+.cost-item-right{flex:1;display:flex;flex-direction:column;gap:3px}
+.cost-item-right .lbl{margin-bottom:2px}
+
+/* ── info box ────────────────────────────────── */
+.ibox{background:var(--bgs);border-radius:8px;padding:10px 12px;font-size:12px}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)}
+.irow:last-child{border:none;padding-bottom:0}
+.irow .v{font-weight:700;color:var(--tx);font-family:'IBM Plex Mono',monospace}
+.irow .v.gr{color:var(--gr)}
+.irow .v.big{font-size:14px;font-weight:800;color:var(--gr)}
+
+/* ── parcela destaque ────────────────────────── */
+.parcela-box{background:var(--blb);border:1px solid #BBDEFB;border-radius:9px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.parcela-lb{font-size:12px;font-weight:600;color:var(--bl)}
+.parcela-v{font-size:20px;font-weight:800;color:var(--bl);font-family:'IBM Plex Mono',monospace}
+
+/* ── modal ───────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border-radius:16px;width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hd{padding:15px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.modal-t{font-size:15px;font-weight:800}
+.modal-s{font-size:12px;color:var(--txm);margin-top:1px}
+.modal-x{width:28px;height:28px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);font-size:16px;color:var(--txm);display:flex;align-items:center;justify-content:center}
+.modal-bd{overflow-y:auto}
+.car-opt{display:flex;gap:12px;padding:11px 18px;cursor:pointer;border-left:3px solid transparent;transition:background .1s;align-items:center}
+.car-opt:hover{background:var(--bgs)}
+.car-opt.sel{background:var(--grl);border-left-color:var(--gr)}
+.opt-img{width:76px;height:52px;border-radius:7px;overflow:hidden;background:var(--bgm);flex-shrink:0}
+.opt-img img{width:100%;height:100%;object-fit:cover}
+.opt-br{font-size:10px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.06em}
+.opt-mo{font-size:14px;font-weight:800;line-height:1.2}
+.opt-ve{font-size:11px;color:var(--txm);margin-top:2px}
+.opt-pr{text-align:right;flex-shrink:0;margin-left:auto;padding-left:10px}
+.opt-pr .main{font-size:13px;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.opt-pr .sub{font-size:11px;color:var(--txm)}
+.opt-ck{font-size:18px;color:var(--gr);flex-shrink:0;margin-left:6px}
+.modal-ft{padding:10px 18px;border-top:1px solid var(--bd);background:var(--bgs);font-size:11px;color:var(--txm);text-align:center}
+
+/* ── KPI cards ───────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.kpi{border-radius:14px;padding:16px 18px;border:1.5px solid var(--bd);position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kpi.w{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.kpi-badge{position:absolute;top:0;right:0;font-size:9px;font-weight:800;padding:3px 10px;border-bottom-left-radius:8px;color:#fff;letter-spacing:.06em}
+.kpi-ico{font-size:18px;margin-bottom:5px}
+.kpi-lb{font-size:12px;font-weight:600;color:var(--txs);margin-bottom:4px}
+.kpi-v{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;letter-spacing:-1px;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--txm);line-height:1.5}
+
+/* ── insight ─────────────────────────────────── */
+.insight{border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.insight.gr{background:var(--grl);border:1px solid var(--grm)}
+.insight.bl{background:var(--blb);border:1px solid #BBDEFB}
+.ins-t{font-size:14px;font-weight:700;margin-bottom:2px}
+.ins-s{font-size:12px;color:var(--txs)}
+
+/* ── chart ───────────────────────────────────── */
+.chart-card{background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.chart-wrap{position:relative;width:100%;height:240px}
+#myChart{position:absolute!important;top:0;left:0;width:100%!important;height:100%!important}
+
+/* ── flow table ──────────────────────────────── */
+.flow{border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:20px}
+.flow-hd{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--bd)}
+.flow-tabs{display:flex;gap:5px}
+.ftab{padding:5px 12px;font-size:12px;font-weight:600;border-radius:20px;border:1.5px solid var(--bd);background:transparent;color:var(--txm);transition:all .15s}
+.ftab.gr{border-color:var(--gr);background:var(--grl);color:var(--gr)}
+.ftab.bl{border-color:var(--bl);background:var(--blb);color:var(--bl)}
+.ftab.go{border-color:var(--go);background:var(--gob);color:var(--go)}
+.flow-scroll{overflow-x:auto}
+.ft{width:100%;border-collapse:collapse;font-size:11px}
+.ft th{padding:7px 11px;text-align:right;font-size:10px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.06em;background:var(--bgs);border-bottom:1px solid var(--bd);white-space:nowrap}
+.ft th.tl{text-align:left;position:sticky;left:0;z-index:2}
+.ft th.ac{color:inherit}
+.ft td{padding:7px 11px;text-align:right;font-family:'IBM Plex Mono',monospace;white-space:nowrap;border-bottom:1px solid var(--bd)}
+.ft td.tl{text-align:left;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--txs);position:sticky;left:0;z-index:1}
+.ft tr.alt{background:var(--bgs)}
+.vp{color:#2E7D32}.vn{color:var(--rd)}.vz{color:#ddd}
+.vs{font-weight:700}.vsp{color:var(--gr);font-weight:700}.vsn{color:var(--rd);font-weight:700}
+.btn-exp{width:100%;padding:10px;background:var(--bgs);border:none;border-top:1px solid var(--bd);color:var(--gr);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+.btn-exp:hover{background:var(--grl)}
+.arr{display:inline-block;transition:transform .2s}
+.arr.open{transform:rotate(180deg)}
+
+/* ── summary table ───────────────────────────── */
+.sum{background:var(--bg);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.sum-hd{padding:13px 18px;border-bottom:1px solid var(--bd);font-size:14px;font-weight:700}
+.st{width:100%;border-collapse:collapse}
+.st th{padding:8px 14px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;background:var(--bgs)}
+.st th.tl{text-align:left;color:var(--txm);font-weight:600;letter-spacing:.05em}
+.st td{padding:8px 14px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;border-top:1px solid var(--bd)}
+.st td.tl{text-align:left;font-family:'Inter',sans-serif;font-size:12px;color:var(--txs)}
+.st tr.alt{background:var(--bgs)}
+.st tr.tot{border-top:2px solid var(--bdm)}
+.st tr.tot td{font-weight:800;font-size:15px;background:var(--bgs)}
+.st tr.tot td.tl{font-size:13px;color:var(--tx);font-family:'Inter',sans-serif}
+.best-badge{margin-left:5px;font-size:9px;background:var(--gr);color:#fff;padding:2px 6px;border-radius:4px;vertical-align:middle;font-family:'Inter',sans-serif}
+
+/* ── note ────────────────────────────────────── */
+.note{padding:12px 16px;background:var(--bg);border:1px solid var(--bd);border-radius:12px;font-size:11px;color:var(--txm);line-height:1.8}
+.note strong{color:var(--txs)}
+
+.slbl{font-size:11px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+
+/* ── loading overlay ──────────────────────────── */
+.loading-overlay{position:fixed;inset:0;z-index:999;background:var(--bgs);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--bd);border-top-color:var(--gr);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--txm);font-weight:500}
+
+/* ── catalog sidebar ──────────────────────────── */
+.wrap{display:flex;max-width:1600px;margin:0 auto;align-items:flex-start}
+.catalog{width:280px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--bg);height:calc(100vh - 122px);overflow-y:auto;position:sticky;top:122px}
+.cat-hd{padding:12px 14px;border-bottom:1px solid var(--bd);background:var(--bgs);position:sticky;top:0;z-index:5}
+.cat-hd-title{font-size:12px;font-weight:700}
+.cat-hd-sub{font-size:11px;color:var(--txm);margin-top:1px}
+.cat-item{padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;border-left:3px solid transparent}
+.cat-item:hover{background:var(--bgs)}
+.cat-item.active{background:var(--grl);border-left-color:var(--gr)}
+.cat-item-name{font-size:12px;font-weight:700;line-height:1.3;margin-bottom:3px}
+.cat-item-row{display:flex;justify-content:space-between;align-items:center}
+.cat-item-preco{font-size:12px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--tx)}
+.cat-item-assin{font-size:11px;color:var(--gr);font-family:'IBM Plex Mono',monospace}
+.cat-seg{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--bgm);color:var(--txm);margin-bottom:4px;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- loading overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Carregando catálogo zMatch…</div>
+</div>
+
+<!-- modal -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-t">Escolher veículo</div><div class="modal-s">Catálogo zMatch</div></div>
+      <button class="modal-x" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-bd" id="modal-bd"></div>
+    <div class="modal-ft">💡 Em produção, lista virá da base de dados zMatch</div>
+  </div>
+</div>
+
+<!-- nav -->
+<nav class="nav">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="nav-z">z</div>
+    <div style="font-size:15px;font-weight:800;letter-spacing:-.3px">zMatch <span style="font-size:12px;font-weight:500;color:var(--txm)">Comparativo Financeiro</span></div>
+  </div>
+  <a href="https://zmatch.com.br" target="_blank" style="font-size:12px;color:var(--gr);font-weight:600;text-decoration:none">Ver catálogo →</a>
+</nav>
+
+<!-- hero -->
+<div class="hero">
+  <div class="badge">🧮 COMPARATIVO FINANCEIRO</div>
+  <h1>Assinatura, financiamento ou compra à vista?<br><span style="color:var(--gr)">Descubra qual faz mais sentido para você.</span></h1>
+  <p>Selecione o carro, configure as condições e veja o resultado em tempo real.</p>
+</div>
+
+<!-- layout -->
+<div class="wrap">
+
+  <!-- ═══ PAINEL ESQUERDO ══════════════════════ -->
+  <div class="left">
+
+    <!-- Car card -->
+    <div class="car">
+      <div class="car-img">
+        <div class="car-icon-wrap" id="car-icon">🚗</div>
+        <div class="car-name">
+          <div class="car-br" id="car-brand"></div>
+          <div class="car-mo" id="car-model"></div>
+          <div class="car-ve" id="car-ver"></div>
+        </div>
+        <button class="btn-ch" onclick="openModal()">⇄ Trocar veículo</button>
+      </div>
+      <div class="car-pr">
+        <div class="car-pr-item">
+          <div class="pr-lb">Preço do veículo</div>
+          <div class="pr-v" id="car-preco"></div>
+        </div>
+        <div class="car-pr-div"></div>
+        <div class="car-pr-item">
+          <div class="pr-lb">Revenda estimada</div>
+          <div class="pr-v gr" id="car-rev"></div>
+        </div>
+      </div>
+      <div class="car-plan">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="plan-lb" style="margin-bottom:0">Plano de assinatura</div>
+          <div style="display:flex;gap:0;border:1.5px solid var(--bd);border-radius:7px;overflow:hidden">
+            <button id="mode-auto" onclick="setAssinMode('auto')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all .12s">Tabela</button>
+            <button id="mode-manual" onclick="setAssinMode('manual')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;border-left:1.5px solid var(--bd);cursor:pointer;transition:all .12s">Manual</button>
+          </div>
+        </div>
+
+        <!-- modo automático: chips de período/km -->
+        <div id="plan-auto">
+          <div class="g2" style="margin-bottom:0">
+            <div>
+              <div class="lbl">Período</div>
+              <div class="chip-row" id="chips-m"></div>
+            </div>
+            <div>
+              <div class="lbl">Franquia</div>
+              <div class="chip-row" id="chips-k"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- modo manual: input livre -->
+        <div id="plan-manual" style="display:none">
+          <div class="f" style="margin-bottom:0">
+            <div class="lbl">Valor da mensalidade <span class="hint">editável</span></div>
+            <div class="inp" style="border-color:var(--gr)">
+              <div class="pfx" style="background:var(--grl);border-color:var(--grm);color:var(--gr);font-weight:700">R$</div>
+              <input id="i-assin-manual" type="number" placeholder="ex: 6854" oninput="recalc()">
+              <div class="sfx">/mês</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="assin-box" style="margin-top:10px">
+          <div>
+            <div class="assin-info-lb">Mensalidade da assinatura</div>
+            <div class="assin-info-sub" id="assin-sub"></div>
+          </div>
+          <div class="assin-val" id="assin-val"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sec 2: Custos -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="dot">2</div>
+        <div><div class="sec-t">Custos do veículo</div><div class="sec-s">Pré-preenchido · edite se necessário</div></div>
+      </div>
+      <div class="sec-b">
+
+        <!-- IPVA: input à esquerda, toggle à direita -->
+        <div class="f">
+          <div class="lbl">IPVA <span class="hint">% ao ano</span></div>
+          <div class="cost-item">
+            <div class="inp ro" style="width:108px;flex-shrink:0">
+              <input id="i-ipva" type="number" readonly>
+              <div class="sfx">%</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--txm);margin-bottom:4px">Forma de pagamento</div>
+              <div class="toggle-row">
+                <button class="tog" id="tip1" onclick="setIpva(1)">À vista</button>
+                <button class="tog" id="tip5" onclick="setIpva(5)">Em 5x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Seguro: mesmo padrão -->
+        <div class="f">
+          <div class="lbl">Seguro <span class="hint">% ao ano</span></div>
+          <div class="cost-item">
+            <div class="inp ro" style="width:108px;flex-shrink:0">
+              <input id="i-seg" type="number" readonly>
+              <div class="sfx">%</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--txm);margin-bottom:4px">Forma de pagamento</div>
+              <div class="toggle-row">
+                <button class="tog" id="tseg1" onclick="setSeg(1)">À vista</button>
+                <button class="tog" id="tseg4" onclick="setSeg(4)">Em 4x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Manutenção e Revenda -->
+        <div class="g2">
+          <div class="f">
+            <div class="lbl">Manutenção <span class="hint">/ano</span></div>
+            <div class="inp ro"><div class="pfx">R$</div><input id="i-man" type="number" readonly></div>
+          </div>
+          <div class="f">
+            <div class="lbl">Revenda <span class="hint">editável</span></div>
+            <div class="inp"><input id="i-rev" type="number" step="1" oninput="recalc()"><div class="sfx">%</div></div>
+          </div>
+        </div>
+
+        <!-- Documentação e Carregador -->
+        <div class="g2">
+          <div class="f" style="margin-bottom:0">
+            <div class="lbl">Documentação</div>
+            <div class="inp"><div class="pfx">R$</div><input id="i-doc" type="number" value="500" oninput="recalc()"></div>
+          </div>
+          <div class="f" style="margin-bottom:0">
+            <div class="lbl">Carregador</div>
+            <div class="inp"><div class="pfx">R$</div><input id="i-carr" type="number" value="0" oninput="recalc()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sec 3: Assinatura -->
+    <div class="sec ac-gr">
+      <div class="sec-h">
+        <div class="dot">3</div>
+        <div><div class="sec-t">Condições da assinatura</div></div>
+      </div>
+      <div class="sec-b">
+        <div class="f">
+          <div class="lbl">Retorno do investimento <span class="hint">% a.m.</span></div>
+          <div class="inp"><input id="i-rend" type="number" value="1.17" step="0.1" oninput="recalc()"><div class="sfx">% a.m.</div></div>
+        </div>
+        <div class="ibox">
+          <div class="irow"><span>Capital investido (= preço do carro)</span><span class="v" id="ib-cap"></span></div>
+          <div class="irow"><span>Rendimento mensal estimado</span><span class="v gr" id="ib-rend"></span></div>
+          <div class="irow"><span>Mensalidade da assinatura</span><span class="v big" id="ib-assin"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sec 4: Financiamento -->
+    <div class="sec ac-bl">
+      <div class="sec-h">
+        <div class="dot bl">4</div>
+        <div><div class="sec-t">Condições do financiamento</div></div>
+      </div>
+      <div class="sec-b">
+        <div class="g2">
+          <div class="f">
+            <div class="lbl">Entrada</div>
+            <div class="inp"><input id="i-ent" type="number" value="30" step="5" oninput="recalc()"><div class="sfx">%</div></div>
+          </div>
+          <div class="f">
+            <div class="lbl">Juros <span class="hint">a.m.</span></div>
+            <div class="inp"><input id="i-jur" type="number" value="2.01" step="0.1" oninput="recalc()"><div class="sfx">%</div></div>
+          </div>
+        </div>
+        <div class="f">
+          <div class="lbl">Prazo do financiamento</div>
+          <div class="inp"><input id="i-prz" type="number" value="36" step="12" min="12" oninput="recalc()"><div class="sfx">meses</div></div>
+        </div>
+        <div class="parcela-box">
+          <div class="parcela-lb">Parcela mensal estimada</div>
+          <div class="parcela-v" id="parcela-v">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- ═══ PAINEL DIREITO ═══════════════════════ -->
+  <div class="right">
+
+    <div class="slbl" id="slbl">Saldo líquido ao final de 36 meses</div>
+
+    <div class="kpis">
+      <div class="kpi" id="kpi-a" style="background:var(--grl)">
+        <div class="kpi-ico">✍️</div>
+        <div class="kpi-lb">Assinatura</div>
+        <div class="kpi-v" id="kv-a" style="color:var(--gr)">—</div>
+        <div class="kpi-sub" id="ks-a"></div>
+      </div>
+      <div class="kpi" id="kpi-f" style="background:var(--blb)">
+        <div class="kpi-ico">🏦</div>
+        <div class="kpi-lb">Financiamento</div>
+        <div class="kpi-v" id="kv-f" style="color:var(--bl)">—</div>
+        <div class="kpi-sub" id="ks-f"></div>
+      </div>
+      <div class="kpi" id="kpi-c" style="background:var(--gob)">
+        <div class="kpi-ico">💰</div>
+        <div class="kpi-lb">Compra à Vista</div>
+        <div class="kpi-v" id="kv-c" style="color:var(--go)">—</div>
+        <div class="kpi-sub" id="ks-c"></div>
+      </div>
+    </div>
+
+    <div class="insight" id="insight">
+      <span id="ins-ico" style="font-size:18px;flex-shrink:0"></span>
+      <div><div class="ins-t" id="ins-t"></div><div class="ins-s" id="ins-s"></div></div>
+    </div>
+
+    <div class="chart-card">
+      <div style="font-size:14px;font-weight:700">Evolução do Saldo Acumulado</div>
+      <div style="font-size:12px;color:var(--txm);margin:2px 0 14px">Posição financeira mês a mês</div>
+      <div class="chart-wrap"><canvas id="myChart"></canvas></div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-hd">
+        <div><div style="font-size:14px;font-weight:700">Fluxo de Caixa Mensal</div><div style="font-size:11px;color:var(--txm)">Mês a mês por modalidade</div></div>
+        <div class="flow-tabs">
+          <button class="ftab" id="ft-a" onclick="setTab('a')">✍️ Assinatura</button>
+          <button class="ftab" id="ft-f" onclick="setTab('f')">🏦 Financiamento</button>
+          <button class="ftab" id="ft-c" onclick="setTab('c')">💰 Compra</button>
+        </div>
+      </div>
+      <div class="flow-scroll"><table class="ft" id="ft"></table></div>
+      <button class="btn-exp" id="btn-exp" onclick="toggleExp()">
+        <span class="arr" id="arr">▼</span>
+        <span id="exp-lbl">Ver todos os meses</span>
+      </button>
+    </div>
+
+    <div class="sum">
+      <div class="sum-hd">Resumo de Custos no Período</div>
+      <table class="st" id="st"></table>
+    </div>
+
+    <div class="note" id="note"></div>
+
+  </div><!-- /right -->
+
+  <!-- ═══ CATÁLOGO LATERAL ═══════════════════════ -->
+  <div class="catalog">
+    <div class="cat-hd">
+      <div class="cat-hd-title">Catálogo zMatch</div>
+      <div class="cat-hd-sub">Clique para carregar</div>
+    </div>
+    <div id="catalog-list"></div>
+  </div>
+
+</div>
+
+<script>
+// ── supabase config ───────────────────────────────────────────────────────────
+const SUPA_URL = 'https://nvgoshmcqfwkuaptjehp.supabase.co';
+const SUPA_KEY = 'sb_publishable_3fxlalxHsnacR9krO76_0g_U6ty-VLI';
+
+// ── state ─────────────────────────────────────────────────────────────────────
+let CARS=[], car=null, M=36, K=1000, IP=1, SP=4, tab='a', exp=false, CH=null, RES=null, assinMode='auto';
+
+// ── fetch do banco ────────────────────────────────────────────────────────────
+async function loadCatalog() {
+  showLoading(true);
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/carros?select=*,planos(prazo,km_mensal,mensalidade)&ativo=eq.true&order=preco.asc`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+    );
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+    const data = await res.json();
+    CARS = data.map(c => ({
+      id:    c.id,
+      brand: c.marca,
+      model: c.modelo_full,
+      ver:   c.modelo_full,
+      year:  String(c.ano),
+      img:   imgFor(c.segmento),
+      preco: c.preco,
+      ipva:  c.ipva_pct,
+      seg:   c.seg_pct,
+      man:   c.man_anual,
+      rev:   c.rev_pct,
+      pl:    (c.planos||[]).map(p=>({m:p.prazo, km:p.km_mensal, v:p.mensalidade}))
+    }));
+    showLoading(false);
+    loadCar(CARS[0]);
+    renderCatalog();
+  } catch(e) {
+    showLoading(false);
+    showError('Não foi possível carregar o catálogo: ' + e.message);
+  }
+}
+
+function imgFor(seg) {
+  const map = {
+    'SUV':      'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=700&q=80',
+    'HATCHBACK':'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=700&q=80',
+    'SEDAN':    'https://images.unsplash.com/photo-1625231338699-4cf57a5b5a0f?w=700&q=80',
+    'PICK-UP':  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80',
+    'VAN':      'https://images.unsplash.com/photo-1570125584669-32afc26b0a26?w=700&q=80',
+    'PERUA':    'https://images.unsplash.com/photo-1625231338699-4cf57a5b5a0f?w=700&q=80',
+  };
+  return map[seg] || map['HATCHBACK'];
+}
+
+function showLoading(on) {
+  const el = document.getElementById('loading-overlay');
+  if (el) el.style.display = on ? 'flex' : 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('loading-overlay');
+  if (el) el.innerHTML = `<div style="text-align:center;padding:32px"><div style="font-size:28px;margin-bottom:12px">⚠️</div><div style="font-weight:700;margin-bottom:6px">Erro ao carregar dados</div><div style="font-size:12px;color:var(--txm)">${msg}</div></div>`;
+}
+
+const $=id=>document.getElementById(id);
+const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+const fmtK=v=>{const a=Math.abs(v);return a>=1e6?`${(v/1e6).toFixed(1)}M`:a>=1000?`${(v/1000).toFixed(0)}k`:String(Math.round(v))};
+const fmtP=v=>`${(v*100).toFixed(1)}%`;
+const gvAuto=c=>c.pl.find(p=>p.m===M&&p.km===K)?.v||c.pl.find(p=>p.m===M)?.v||c.pl[0]?.v||0;
+const gv=c=>assinMode==='manual'?(+$('i-assin-manual').value||gvAuto(c)):gvAuto(c);
+
+// ── schedule ──────────────────────────────────────────────────────────────────
+function sched(pm,tot,ip,iP,sp,sP,man){
+  const s=Array.from({length:pm+1},()=>({i:0,s:0,m:0}));
+  const yrs=Math.ceil(pm/12),ia=ip*tot,sa=sp*tot;
+  for(let y=0;y<yrs;y++){
+    for(let i=0;i<iP;i++){const m=y*12+1+i;if(m<=pm)s[m].i+=ia/iP;}
+    for(let i=0;i<sP;i++){const m=y*12+1+i;if(m<=pm)s[m].s+=sa/sP;}
+  }
+  for(let y=1;y<=yrs;y++){
+    const m=y*12;
+    if(m<=pm)s[m].m+=man;
+    else if(pm%12&&y===yrs)s[pm].m+=man*((pm%12)/12);
+  }
+  return s;
+}
+
+// ── engine ────────────────────────────────────────────────────────────────────
+function calc(){
+  if(!car) return null;
+  const pr=car.preco, doc=+$('i-doc').value||0, carr=+$('i-carr').value||0;
+  const rend=(+$('i-rend').value||0)/100;
+  const ep=(+$('i-ent').value||0)/100, jp=(+$('i-jur').value||0)/100, pz=+$('i-prz').value||36;
+  const revPct=(+$('i-rev').value||car.rev*100)/100;
+  const av=gv(car), rev=pr*revPct, ent=ep*pr, fin=pr-ent;
+  const parc=jp>0?fin*(jp*Math.pow(1+jp,pz))/(Math.pow(1+jp,pz)-1):fin/pz;
+  // HORIZONTE = maior entre prazo de assinatura e prazo de financiamento
+  const H=Math.max(M,pz);
+  const sc=sched(H,pr,car.ipva,IP,car.seg,SP,car.man);
+  // Assinatura: fórmula fechada — após M meses, para de pagar mensalidade e capital fica rendendo livre
+  const sA=m=>{
+    if(m<=M) return rend===0?pr-av*m:pr*Math.pow(1+rend,m)-av*((Math.pow(1+rend,m)-1)/rend);
+    // após assinatura: capital livre rende sem saída de mensalidade
+    const sAtM=rend===0?pr-av*M:pr*Math.pow(1+rend,M)-av*((Math.pow(1+rend,M)-1)/rend);
+    return rend===0?sAtM:sAtM*Math.pow(1+rend,m-M);
+  };
+  const chart=[],rows=[];
+  let sF = pr - (ent + doc + carr);
+  let sC = -(doc + carr);
+  for(let m=1;m<=H;m++){
+    const frend = rend>0 ? Math.max(0,sF)*rend : 0;
+    const fp=m<=pz?-parc:0, fv=m===H?rev:0;
+    sF += frend + fp - sc[m].i - sc[m].s - sc[m].m + fv;
+
+    // Compra à vista: após venda (mês M), custos param e saldo positivo rende
+    const carVendido = m > M;
+    const cv = m===M ? rev : 0;
+    const crend = carVendido && rend>0 ? Math.max(0,sC)*rend : 0;
+    const ci_m = carVendido ? 0 : -sc[m].i;
+    const cs_m = carVendido ? 0 : -sc[m].s;
+    const cm_m = carVendido ? 0 : -sc[m].m;
+    sC += crend + ci_m + cs_m + cm_m + cv;
+
+    const a=sA(m);
+    const rm=rend>0?(m===1?pr:sA(m-1))*rend:0;
+    // assinatura só paga mensalidade até M
+    const aa_m = m<=M ? -av : 0;
+
+    chart.push({m,A:Math.round(a),F:Math.round(sF),C:Math.round(sC)});
+    rows.push({m,aa:aa_m,ar:rm,as:a,fp,ff:frend,fi:-sc[m].i,fs:-sc[m].s,fm:-sc[m].m,fv,fS:sF,ci:ci_m,cs:cs_m,cm:cm_m,cr:crend,cv,cS:sC});
+  }
+  return{chart,rows,fA:chart[H-1]?.A??0,fF:chart[H-1]?.F??0,fC:chart[H-1]?.C??0,
+    H,parc,ent,rev,pr,doc,carr,av,rend,ep,jp,pz,
+    ti:sc.reduce((s,v)=>s+v.i,0),ts:sc.reduce((s,v)=>s+v.s,0),tm:sc.reduce((s,v)=>s+v.m,0)};
+}
+
+// ── recalc ────────────────────────────────────────────────────────────────────
+function recalc(){
+  if(!car) return;
+  RES=calc();
+  const {fA,fF,fC,parc,ent,rev,pr,av,rend,ep,jp,pz,ti,ts,tm}=RES;
+  const mx=Math.max(fA,fF,fC);
+
+  // left info
+  $('ib-cap').textContent=fmt(pr);
+  $('ib-rend').textContent=fmt(pr*rend);
+  $('ib-assin').innerHTML=fmt(av)+'/mês';
+  $('parcela-v').textContent=fmt(parc)+'/mês';
+  const H=RES.H||M;
+  $('slbl').textContent=H>M?`Saldo líquido ao final de ${H} meses (assinatura: ${M}m · financiamento: ${RES.pz}m)`:`Saldo líquido ao final de ${M} meses`;
+
+  // KPIs
+  [['a',fA,'var(--gr)','#277A2B'],['f',fF,'var(--bl)','#1354A0'],['c',fC,'var(--go)','#9B4F08']].forEach(([k,v,col,hx])=>{
+    $(`kv-${k}`).textContent=fmt(v);
+    const el=$(`kpi-${k}`);
+    el.querySelector('.kpi-badge')?.remove();
+    el.style.border='1.5px solid var(--bd)';
+    el.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';
+    el.classList.remove('w');
+    if(v===mx){
+      el.style.border=`1.5px solid ${hx}`;
+      el.style.boxShadow=`0 4px 16px ${hx}28`;
+      el.classList.add('w');
+      const b=document.createElement('div');
+      b.className='kpi-badge';b.style.background=hx;b.textContent='MELHOR OPÇÃO';
+      el.appendChild(b);
+    }
+  });
+  $('ks-a').textContent=`${fmt(av)}/mês por ${M}m · capital rende até mês ${RES.H||M}`;
+  $('ks-f').textContent=`${fmt(parc)}/mês · ${pz} parcelas · entrada ${fmt(ent)}`;
+  $('ks-c').textContent=`Revende por ${fmt(rev)} após ${M} meses`;
+  $('car-rev').textContent=fmt(rev);
+
+  // insight
+  const ins=$('insight'), diff=fA-fF;
+  if(diff>0){
+    ins.className='insight gr';
+    $('ins-ico').textContent='🏆';
+    $('ins-t').textContent=`Assinatura economiza ${fmt(diff)} vs. financiamento`;
+    $('ins-s').textContent=`em ${M} meses, com retorno de ${fmtP(rend)} a.m. sobre ${fmt(pr)}`;
+  }else{
+    ins.className='insight bl';
+    $('ins-ico').textContent='ℹ️';
+    $('ins-t').textContent=`Financiamento supera assinatura em ${fmt(-diff)}`;
+    $('ins-s').textContent='Ajuste a taxa de retorno para explorar outros cenários.';
+  }
+
+  // chart
+  const labels=RES.chart.map(d=>d.m),dA=RES.chart.map(d=>d.A),dF=RES.chart.map(d=>d.F),dC=RES.chart.map(d=>d.C);
+  if(CH){CH.data.labels=labels;CH.data.datasets[0].data=dA;CH.data.datasets[1].data=dF;CH.data.datasets[2].data=dC;CH.update('none');}
+  else{
+    requestAnimationFrame(()=>{
+      const cv=$('myChart'),wrap=cv.parentElement;
+      cv.width=wrap.clientWidth||700;cv.height=240;
+      CH=new Chart(cv.getContext('2d'),{type:'line',
+        data:{labels,datasets:[
+          {label:'Assinatura',data:dA,borderColor:'#277A2B',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.3},
+          {label:'Financiamento',data:dF,borderColor:'#1354A0',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.3},
+          {label:'Compra à Vista',data:dC,borderColor:'#9B4F08',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.3},
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          plugins:{
+            legend:{labels:{font:{family:'Inter',size:12},color:'#4E5A4B',usePointStyle:true,pointStyleWidth:10}},
+            tooltip:{backgroundColor:'#fff',borderColor:'#E2E8DF',borderWidth:1,
+              titleColor:'#8A968A',bodyColor:'#4E5A4B',bodyFont:{family:'IBM Plex Mono',size:12},
+              titleFont:{family:'Inter',size:11},padding:12,
+              callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}},
+          scales:{
+            x:{grid:{color:'#E2E8DF'},ticks:{font:{family:'Inter',size:11},color:'#8A968A'}},
+            y:{grid:{color:'#E2E8DF'},ticks:{font:{family:'Inter',size:11},color:'#8A968A',maxTicksLimit:7,callback:v=>fmtK(v)}}
+          },animation:{duration:300}}});
+    });
+  }
+
+  renderFlow();
+
+  // summary table — add financing rendimento
+  const fRendTotal = RES.rows.reduce((s,r)=>s+r.ff,0);
+  const rows=[
+    {l:'Desembolso de caixa inicial',a:0,f:-(ent+RES.doc+RES.carr),c:-(RES.doc+RES.carr)},
+    {l:'Capital investido (não sai do caixa)',a:pr,f:pr-ent,c:0},
+    {l:'Parcelas / mensalidades',a:-(av*M),f:-(parc*Math.min(pz,M)),c:0},
+    {l:'IPVA total',a:0,f:-ti,c:-ti},
+    {l:'Seguro total',a:0,f:-ts,c:-ts},
+    {l:'Manutenção total',a:0,f:-tm,c:-tm},
+    {l:'Valor de revenda',a:0,f:rev,c:rev},
+    {l:'Rendimento do investimento',a:fA-pr+(av*M),f:fRendTotal,c:0},
+  ];
+  let h=`<thead><tr style="background:var(--bgs)"><th class="tl">Item</th><th style="color:var(--gr)">✍️ Assinatura</th><th style="color:var(--bl)">🏦 Financiamento</th><th style="color:var(--go)">💰 Compra</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    h+=`<tr class="${i%2?'alt':''}"><td class="tl">${r.l}</td>${[r.a,r.f,r.c].map(v=>`<td class="${v>0?'vp':v<0?'vn':''}">${v===0?'—':fmt(v)}</td>`).join('')}</tr>`;
+  });
+  h+=`<tr class="tot"><td class="tl">SALDO FINAL</td>${[fA,fF,fC].map(v=>`<td style="color:${v===mx?'var(--gr)':'var(--tx)'}">${fmt(v)}${v===mx?'<span class="best-badge">✓</span>':''}</td>`).join('')}</tr></tbody>`;
+  $('st').innerHTML=h;
+
+  $('note').innerHTML=`<strong>ℹ️ Metodologia:</strong> Na <strong>assinatura</strong>, ${fmt(pr)} ficam integralmente investidos rendendo ${fmtP(rend)} a.m. Na <strong>financiamento</strong>, o capital remanescente (${fmt(pr)} − entrada) rende enquanto positivo — saldo negativo não gera rendimento. Na <strong>compra à vista</strong>, o capital vira ativo (carro) → saldo de caixa parte de zero e só acumula custos de manutenção do veículo, recuperando parte via revenda. Comparação justa: os três cenários partem do mesmo capital de ${fmt(pr)}.`;
+}
+
+// ── flow table ────────────────────────────────────────────────────────────────
+function renderFlow(){
+  if(!RES)return;
+  const rows=RES.rows,isA=tab==='a',isF=tab==='f';
+  const vis=exp?rows:rows.slice(0,4);
+  const col=isA?'var(--gr)':isF?'var(--bl)':'var(--go)';
+  const bg=isA?'var(--grl)':isF?'var(--blb)':'var(--gob)';
+  const acCls=isA?'ac-gr':isF?'ac-bl':'ac-go';
+
+  let h='<thead><tr>';
+  h+=`<th class="tl" style="color:${col}">Mês</th>`;
+  if(isA)h+=`<th>Assinatura</th><th>Rendimento</th><th style="color:${col}">Saldo ★</th>`;
+  if(isF)h+=`<th>Parcela</th><th>Rendimento</th><th>IPVA</th><th>Seguro</th><th>Manut.</th><th>Revenda</th><th style="color:${col}">Saldo ★</th>`;
+  if(!isA&&!isF)h+=`<th>IPVA</th><th>Seguro</th><th>Manut.</th><th>Revenda</th><th style="color:${col}">Saldo ★</th>`;
+  h+=`</tr>`;
+  // initial row — financing starts with (pr - ent - doc - carr) invested
+  const fInit = RES.pr - RES.ent - RES.doc - RES.carr;
+  h+=`<tr style="background:${bg}88;border-bottom:1px solid var(--bd)">`;
+  h+=`<td class="tl" style="font-size:11px;font-weight:700;color:var(--txm)">Inicial</td>`;
+  if(isA)h+=`<td class="vz">—</td><td class="vz">—</td><td class="vsp">${fmt(RES.pr)}</td>`;
+  if(isF)h+=`<td class="vsn">${fmt(-RES.ent)}</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="${fInit>=0?'vsp':'vsn'}">${fmt(fInit)}</td>`;
+  if(!isA&&!isF)h+=`<td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vsp">R$ 0</td>`;
+  h+=`</tr></thead><tbody>`;
+
+  vis.forEach((r,i)=>{
+    const last=r.m===rows.length;
+    h+=`<tr class="${last?'':'i%2?\'alt\':\'\''.replace('i',i)}" style="${last?`background:${bg}`:i%2?'background:var(--bgs)':''}">`;
+    h+=`<td class="tl" style="color:${last?col:'var(--txs)'}">${r.m}${last?' ★':''}</td>`;
+    function cv(v,s){if(v===0)return`<td class="vz">—</td>`;const c=s?(v>=0?'vsp':'vsn'):(v>0?'vp':'vn');return`<td class="${c}">${fmt(v)}</td>`;}
+    if(isA)h+=cv(r.aa)+cv(r.ar)+(r.as>=0?`<td class="vsp">${fmt(r.as)}</td>`:`<td class="vsn">${fmt(r.as)}</td>`);
+    if(isF)h+=cv(r.fp)+cv(r.ff)+cv(r.fi)+cv(r.fs)+cv(r.fm)+cv(r.fv)+(r.fS>=0?`<td class="vsp">${fmt(r.fS)}</td>`:`<td class="vsn">${fmt(r.fS)}</td>`);
+    if(!isA&&!isF)h+=cv(r.ci)+cv(r.cs)+cv(r.cm)+cv(r.cr||0)+cv(r.cv)+(r.cS>=0?`<td class="vsp">${fmt(r.cS)}</td>`:`<td class="vsn">${fmt(r.cS)}</td>`);
+    h+=`</tr>`;
+  });
+  h+=`</tbody>`;
+  $('ft').innerHTML=h;
+  $('exp-lbl').textContent=exp?'Recolher':`Ver todos os ${rows.length} meses (assin. ${M}m · financ. ${RES?.pz||M}m)`;
+  $('arr').className=`arr${exp?' open':''}`;
+  ['a','f','c'].forEach(t=>{
+    const el=$(`ft-${t}`);
+    el.className='ftab'+(t===tab?t==='a'?' gr':t==='f'?' bl':' go':'');
+  });
+}
+
+function setTab(t){tab=t;renderFlow();}
+function toggleExp(){exp=!exp;renderFlow();}
+
+// ── assinatura mode ───────────────────────────────────────────────────────────
+function setAssinMode(mode){
+  assinMode=mode;
+  if(!car) return;
+  const isAuto=mode==='auto';
+  $('plan-auto').style.display=isAuto?'block':'none';
+  $('plan-manual').style.display=isAuto?'none':'block';
+  // botão ativo: verde; inativo: cinza
+  const on='background:var(--grl);color:var(--gr);font-weight:700;border:none;cursor:pointer;padding:3px 10px;font-size:11px;font-family:inherit';
+  const off='background:var(--bgs);color:var(--txm);font-weight:600;border:none;cursor:pointer;padding:3px 10px;font-size:11px;font-family:inherit';
+  $('mode-auto').style.cssText=isAuto?on:off;
+  $('mode-manual').style.cssText=isAuto?off:on;
+  if(!isAuto){
+    const cur=gvAuto(car);
+    if(!$('i-assin-manual').value)$('i-assin-manual').value=cur;
+  }
+  updateAssin();
+  recalc();
+}
+
+// ── toggles ───────────────────────────────────────────────────────────────────
+function setIpva(v){
+  IP=v;
+  $('tip1').className='tog'+(v===1?' on':'');
+  $('tip5').className='tog'+(v===5?' on':'');
+  recalc();
+}
+function setSeg(v){
+  SP=v;
+  $('tseg1').className='tog'+(v===1?' on':'');
+  $('tseg4').className='tog'+(v===4?' on':'');
+  recalc();
+}
+
+// ── car loading ───────────────────────────────────────────────────────────────
+function loadCar(c){
+  car=c;
+  const icons = {'SUV':'🚙','HATCHBACK':'🚗','SEDAN':'🚘','PICK-UP':'🛻','VAN':'🚐','PERUA':'🚗'};
+  $('car-icon').textContent = icons[c.segmento] || '🚗';
+  $('car-brand').textContent=c.brand;
+  $('car-model').textContent=c.ver;
+  $('car-ver').textContent=`${c.segmento} · ${c.year}`;
+  $('car-preco').textContent=fmt(c.preco);
+  $('car-rev').textContent=fmt(c.preco*c.rev);
+  $('i-ipva').value=(c.ipva*100).toFixed(1);
+  $('i-seg').value=(c.seg*100).toFixed(1);
+  $('i-man').value=c.man;
+  $('i-rev').value=(c.rev*100).toFixed(0);
+
+  const ms=[...new Set(c.pl.map(p=>p.m))].sort((a,b)=>a-b);
+  if(!ms.includes(M))M=ms[0];
+  renderMChips(ms);
+  renderKChips();
+  updateAssin();
+  recalc();
+}
+
+function renderMChips(ms){
+  if(!car) return;
+  $('chips-m').innerHTML='';
+  ms.forEach(m=>{
+    const b=document.createElement('button');
+    b.className='chip'+(m===M?' on':'');
+    b.textContent=`${m}m`;
+    b.onclick=()=>{M=m;K=car.pl.find(p=>p.m===m)?.km||K;renderMChips(ms);renderKChips();updateAssin();recalc();};
+    $('chips-m').appendChild(b);
+  });
+}
+
+function renderKChips(){
+  if(!car) return;
+  const ks=[...new Set(car.pl.filter(p=>p.m===M).map(p=>p.km))].sort((a,b)=>a-b);
+  if(!ks.includes(K))K=ks[0];
+  $('chips-k').innerHTML='';
+  ks.forEach(k=>{
+    const b=document.createElement('button');
+    b.className='chip'+(k===K?' on':'');
+    b.textContent=`${k}km`;
+    b.onclick=()=>{K=k;renderKChips();updateAssin();recalc();};
+    $('chips-k').appendChild(b);
+  });
+}
+
+function updateAssin(){
+  if(!car) return;
+  const v=gv(car);
+  if(assinMode==='auto'){
+    $('assin-sub').textContent=`${K} km/mês · ${M} meses`;
+  } else {
+    $('assin-sub').textContent='valor personalizado';
+  }
+  $('assin-val').innerHTML=fmt(v)+'<span>/mês</span>';
+}
+
+// ── modal ─────────────────────────────────────────────────────────────────────
+function openModal(){
+  $('modal-bd').innerHTML='';
+  CARS.forEach(c=>{
+    const min=Math.min(...c.pl.map(p=>p.v));
+    const d=document.createElement('div');
+    d.className='car-opt'+(c.id===car.id?' sel':'');
+    d.innerHTML=`<div class="opt-img"><img src="${c.img}" alt=""></div><div><div class="opt-br">${c.brand}</div><div class="opt-mo">${c.model}</div><div class="opt-ve">${c.ver} · ${c.year}</div></div><div class="opt-pr"><div class="main">${fmt(c.preco)}</div><div class="sub">a partir de ${fmt(min)}/mês</div></div>${c.id===car.id?'<div class="opt-ck">✓</div>':''}`;
+    d.onclick=()=>{loadCar(c);closeModal();};
+    $('modal-bd').appendChild(d);
+  });
+  $('modal').classList.add('open');
+}
+function closeModal(){$('modal').classList.remove('open');}
+
+// ── catalog sidebar ───────────────────────────────────────────────────────────
+function renderCatalog() {
+  const list = document.getElementById('catalog-list');
+  if (!list) return;
+  list.innerHTML = '';
+  CARS.forEach(c => {
+    const minAssin = c.pl.length ? Math.min(...c.pl.map(p=>p.v)) : 0;
+    const div = document.createElement('div');
+    div.className = 'cat-item' + (car && c.id === car.id ? ' active' : '');
+    div.innerHTML = `
+      <div class="cat-seg">${c.brand}</div>
+      <div class="cat-item-name">${c.model.replace(c.brand+' ','').split(' ').slice(0,4).join(' ')}</div>
+      <div class="cat-item-row">
+        <span class="cat-item-preco">${fmt(c.preco)}</span>
+        <span class="cat-item-assin">a partir ${fmt(minAssin)}/mês</span>
+      </div>`;
+    div.onclick = () => { loadCar(c); renderCatalog(); };
+    list.appendChild(div);
+  });
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+setIpva(1);setSeg(4);
+setAssinMode('auto');
+loadCatalog(); // busca carros do Supabase
+</script>
+</body>
+</html>
