@@ -304,6 +304,17 @@ button{font-family:inherit;cursor:pointer}
           </div>
         </div>
 
+        <!-- chips de plano Silver/Gold/Platinum -->
+        <div style="margin-bottom:10px">
+          <div class="lbl">Plano</div>
+          <div class="chip-row" id="chips-plano">
+            <button id="chip-silver" onclick="setPlano('silver')" class="chip">⚪ Silver</button>
+            <button id="chip-gold"   onclick="setPlano('gold')"   class="chip active">🟡 Gold</button>
+            <button id="chip-plat"   onclick="setPlano('platinum')" class="chip">💎 Platinum</button>
+          </div>
+          <div id="plano-hint" style="font-size:10px;color:var(--txm);margin-top:4px">Silver · Gold · Platinum — preços provisionais até tabela ser atualizada</div>
+        </div>
+
         <!-- modo automático: chips de período/km -->
         <div id="plan-auto">
           <div class="g2" style="margin-bottom:0">
@@ -542,7 +553,8 @@ const SUPA_URL = 'https://nvgoshmcqfwkuaptjehp.supabase.co';
 const SUPA_KEY = 'sb_publishable_3fxlalxHsnacR9krO76_0g_U6ty-VLI';
 
 // ── state ─────────────────────────────────────────────────────────────────────
-let CARS=[], car=null, M=36, K=1000, IP=1, SP=4, tab='a', exp=false, CH=null, RES=null, assinMode='auto';
+let CARS=[], car=null, M=36, K=1000, PLANO='gold', IP=1, SP=4, tab='a', exp=false, CH=null, RES=null, assinMode='auto';
+const PLANO_MULT={'silver':1.00,'gold':1.12,'platinum':1.27}; // provisório até DB ter coluna plano
 
 // ── fetch do banco ────────────────────────────────────────────────────────────
 async function loadCatalog() {
@@ -603,7 +615,7 @@ const $=id=>document.getElementById(id);
 const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
 const fmtK=v=>{const a=Math.abs(v);return a>=1e6?`${(v/1e6).toFixed(1)}M`:a>=1000?`${(v/1000).toFixed(0)}k`:String(Math.round(v))};
 const fmtP=v=>`${(v*100).toFixed(1)}%`;
-const gvAuto=c=>c.pl.find(p=>p.m===M&&p.km===K)?.v||c.pl.find(p=>p.m===M)?.v||c.pl[0]?.v||0;
+const gvAuto=c=>{const base=c.pl.find(p=>p.m===M&&p.km===K)?.v||c.pl.find(p=>p.m===M)?.v||c.pl[0]?.v||0;return Math.round(base*(PLANO_MULT[PLANO]||1));};
 const gv=c=>assinMode==='manual'?(+$('i-assin-manual').value||gvAuto(c)):gvAuto(c);
 
 // ── schedule ──────────────────────────────────────────────────────────────────
@@ -787,7 +799,7 @@ function renderFlow(){
   h+=`<th class="tl" style="color:${col}">Mês</th>`;
   if(isA)h+=`<th>Assinatura</th><th>Rendimento</th><th style="color:${col}">Saldo ★</th>`;
   if(isF)h+=`<th>Parcela</th><th>Rendimento</th><th>IPVA</th><th>Seguro</th><th>Manut.</th><th>Revenda</th><th style="color:${col}">Saldo ★</th>`;
-  if(!isA&&!isF)h+=`<th>IPVA</th><th>Seguro</th><th>Manut.</th><th>Revenda</th><th style="color:${col}">Saldo ★</th>`;
+  if(!isA&&!isF)h+=`<th>Desembolso</th><th>IPVA</th><th>Seguro</th><th>Manut.</th><th>Rendimento</th><th>Revenda</th><th style="color:${col}">Saldo ★</th>`;
   h+=`</tr>`;
   // initial row — financing starts with (pr - ent - doc - carr) invested
   const fInit = RES.pr - RES.ent - RES.doc - RES.carr;
@@ -795,7 +807,8 @@ function renderFlow(){
   h+=`<td class="tl" style="font-size:11px;font-weight:700;color:var(--txm)">Inicial</td>`;
   if(isA)h+=`<td class="vz">—</td><td class="vz">—</td><td class="vsp">${fmt(RES.pr)}</td>`;
   if(isF)h+=`<td class="vsn">${fmt(-RES.ent)}</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="${fInit>=0?'vsp':'vsn'}">${fmt(fInit)}</td>`;
-  if(!isA&&!isF)h+=`<td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vsp">R$ 0</td>`;
+  const cInit=-(RES.doc+RES.carr);
+  if(!isA&&!isF)h+=`<td class="vsn">${fmt(-(RES.pr+RES.doc+RES.carr))}</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="vz">—</td><td class="${cInit>=0?'vsp':'vsn'}">${fmt(cInit)}</td>`;
   h+=`</tr></thead><tbody>`;
 
   vis.forEach((r,i)=>{
@@ -805,7 +818,7 @@ function renderFlow(){
     function cv(v,s){if(v===0)return`<td class="vz">—</td>`;const c=s?(v>=0?'vsp':'vsn'):(v>0?'vp':'vn');return`<td class="${c}">${fmt(v)}</td>`;}
     if(isA)h+=cv(r.aa)+cv(r.ar)+(r.as>=0?`<td class="vsp">${fmt(r.as)}</td>`:`<td class="vsn">${fmt(r.as)}</td>`);
     if(isF)h+=cv(r.fp)+cv(r.ff)+cv(r.fi)+cv(r.fs)+cv(r.fm)+cv(r.fv)+(r.fS>=0?`<td class="vsp">${fmt(r.fS)}</td>`:`<td class="vsn">${fmt(r.fS)}</td>`);
-    if(!isA&&!isF)h+=cv(r.ci)+cv(r.cs)+cv(r.cm)+cv(r.cr||0)+cv(r.cv)+(r.cS>=0?`<td class="vsp">${fmt(r.cS)}</td>`:`<td class="vsn">${fmt(r.cS)}</td>`);
+    if(!isA&&!isF)h+=`<td class="vz">—</td>`+cv(r.ci)+cv(r.cs)+cv(r.cm)+cv(r.cr||0)+cv(r.cv)+(r.cS>=0?`<td class="vsp">${fmt(r.cS)}</td>`:`<td class="vsn">${fmt(r.cS)}</td>`);
     h+=`</tr>`;
   });
   h+=`</tbody>`;
@@ -822,6 +835,18 @@ function setTab(t){tab=t;renderFlow();}
 function toggleExp(){exp=!exp;renderFlow();}
 
 // ── assinatura mode ───────────────────────────────────────────────────────────
+function setPlano(p){
+  PLANO=p;
+  ['silver','gold','plat'].forEach(id=>{
+    const el=$('chip-'+id);
+    if(el) el.className='chip'+(id===p.slice(0,id.length&&p==='platinum'?4:p.length)?(' active'):'');
+  });
+  // corrigir active individualmente
+  $('chip-silver').className='chip'+(p==='silver'?' active':'');
+  $('chip-gold').className='chip'+(p==='gold'?' active':'');
+  $('chip-plat').className='chip'+(p==='platinum'?' active':'');
+  updateAssin();recalc();
+}
 function setAssinMode(mode){
   assinMode=mode;
   if(!car) return;
