@@ -90,6 +90,13 @@ button{font-family:inherit;cursor:pointer}
 .pr-v.gr{font-size:15px;color:var(--gr)}
 .car-plan{padding:12px 14px}
 .plan-lb{font-size:11px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.plan-card{background:var(--bg);border:1.5px solid var(--bd);border-radius:8px;padding:8px 8px 6px;text-align:left;cursor:pointer;transition:all .12s;width:100%}
+.plan-card:hover{border-color:var(--gr);background:var(--grl)}
+.plan-card.active-silver{border-color:#607d8b;background:#eceff1}
+.plan-card.active-gold{border-color:#d4a017;background:#fffbeb}
+.plan-card.active-plat{border-color:#546e7a;background:#eceff1}
+.plan-card-name{font-size:11px;font-weight:800;margin-bottom:4px}
+.plan-card-items{font-size:9.5px;color:var(--txm);line-height:1.5}
 .assin-box{background:var(--grl);border:1px solid var(--grm);border-radius:8px;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 .assin-info-lb{font-size:11px;font-weight:600;color:var(--txs)}
 .assin-info-sub{font-size:11px;color:var(--txm);margin-top:2px}
@@ -305,14 +312,23 @@ button{font-family:inherit;cursor:pointer}
         </div>
 
         <!-- chips de plano Silver/Gold/Platinum -->
-        <div style="margin-bottom:10px">
+        <div style="margin-bottom:12px">
           <div class="lbl">Plano</div>
-          <div class="chip-row" id="chips-plano">
-            <button id="chip-silver" onclick="setPlano('silver')" class="chip">⚪ Silver</button>
-            <button id="chip-gold"   onclick="setPlano('gold')"   class="chip active">🟡 Gold</button>
-            <button id="chip-plat"   onclick="setPlano('platinum')" class="chip">💎 Platinum</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+            <button id="chip-silver" onclick="setPlano('silver')" class="plan-card">
+              <div class="plan-card-name" style="color:#607d8b">⚪ Silver</div>
+              <div class="plan-card-items">Seguro 3ºs R$250k · Rastreador · Manutenção preventiva · IPVA/DPVAT · Gestão multas</div>
+            </button>
+            <button id="chip-gold" onclick="setPlano('gold')" class="plan-card active-gold">
+              <div class="plan-card-name" style="color:#b8860b">🟡 Gold</div>
+              <div class="plan-card-items">Silver + Seguro total PT/Furto · Seguro 3ºs R$500k · Pneus inclusos · Carro reserva sinistro</div>
+            </button>
+            <button id="chip-plat" onclick="setPlano('platinum')" class="plan-card">
+              <div class="plan-card-name" style="color:#546e7a">💎 Platinum</div>
+              <div class="plan-card-items">Gold + <strong>Sem correção IPCA</strong> · Leva &amp; traz · Carro reserva manutenção</div>
+            </button>
           </div>
-          <div id="plano-hint" style="font-size:10px;color:var(--txm);margin-top:4px">Silver · Gold · Platinum — preços provisionais até tabela ser atualizada</div>
+          <div id="plano-hint" style="font-size:10px;color:var(--txm)">⚠️ Multiplicadores de preço provisionais até tabela ser atualizada com valores reais por plano</div>
         </div>
 
         <!-- modo automático: chips de período/km -->
@@ -837,14 +853,13 @@ function toggleExp(){exp=!exp;renderFlow();}
 // ── assinatura mode ───────────────────────────────────────────────────────────
 function setPlano(p){
   PLANO=p;
-  ['silver','gold','plat'].forEach(id=>{
-    const el=$('chip-'+id);
-    if(el) el.className='chip'+(id===p.slice(0,id.length&&p==='platinum'?4:p.length)?(' active'):'');
-  });
-  // corrigir active individualmente
-  $('chip-silver').className='chip'+(p==='silver'?' active':'');
-  $('chip-gold').className='chip'+(p==='gold'?' active':'');
-  $('chip-plat').className='chip'+(p==='platinum'?' active':'');
+  $('chip-silver').className='plan-card'+(p==='silver'?' active-silver':'');
+  $('chip-gold').className='plan-card'+(p==='gold'?' active-gold':'');
+  $('chip-plat').className='plan-card'+(p==='platinum'?' active-plat':'');
+  // Platinum: sem IPCA — mostrar aviso
+  const hint=$('plano-hint');
+  if(p==='platinum') hint.innerHTML='💎 Platinum: <strong>sem correção anual por IPCA</strong> — mensalidade fixa durante todo o contrato';
+  else hint.innerHTML='⚠️ Multiplicadores de preço provisionais até tabela ser atualizada com valores reais por plano';
   updateAssin();recalc();
 }
 function setAssinMode(mode){
